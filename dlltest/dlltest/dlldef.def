@@ -1,0 +1,23 @@
+LIBRARY dlltest
+
+EXPORTS 
+
+	ChangeToWString
+	ChangeToChar
+
+	GetExtension
+
+	AddValue
+	SubValue
+	Magnitude
+	Normalize
+	GetBezier
+	Lerp
+	GetLerpPoint
+	Multiply
+	CreateCascade
+	GetCamera
+	CloseCamera
+	CameraUpdate
+	CameraUpdateOverRide
+
