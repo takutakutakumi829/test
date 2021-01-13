@@ -51,19 +51,29 @@ typedef struct TestStruct
 
 typedef struct FaceType
 {
+    std::vector<std::vector<cv::Point> > contours;
+    std::vector<cv::Vec4i> hierarchy;
+
     std::vector<cv::Rect> faces;
     cv::Rect faceRect = cv::Rect(0, 0, 0, 0);
+    cv::Rect roi;
 
+    cv::Mat old_frame;
     cv::Mat mosaic;
     cv::Mat detection_frame;
     cv::Mat canny;
-    cv::Rect roi;
-    int detection_flag = 0;
+    cv::Mat hsv;
+    cv::Mat hue;
 
+    int detection_flag = 0;
     int basic_flag = 0;
+
     cv::Point basicPos = cv::Point(0, 0);
 
 };
 
+//構造体のチェックと初期化
+DLLEXPORT bool __stdcall CheckFace(FaceType& inFace);
+DLLEXPORT void __stdcall ClearFace(FaceType& inFace);
 
 #endif //PCH_H

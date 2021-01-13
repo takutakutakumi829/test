@@ -7,6 +7,8 @@
 #include <cmath>
 #include <string.h>
 
+FaceType face;
+
 
 BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
@@ -118,9 +120,9 @@ DLLEXPORT float _stdcall Magnitude(float a, float b)
 }
 
 
-DLLEXPORT VECTOR2 _stdcall Normalize(VECTOR2 a)
+DLLEXPORT cv::Point2i _stdcall Normalize(cv::Point2i a)
 {
-    VECTOR2 vec;
+    cv::Point2i vec;
     auto z = Magnitude(a.x, a.y);
     vec.x = a.x / z;
     vec.y = a.y / z;
@@ -285,7 +287,105 @@ DLLEXPORT void __stdcall FaceCheck(std::vector<cv::Rect>& obj, cv::CascadeClassi
 	}
 }
 
-FaceType face;
+DLLEXPORT void __stdcall HandDetect(cv::Mat& inPutFrame, cv::Mat& outPutFrame)
+{
+
+	cv::Mat find;
+	//肌色の抽出
+	cv::cvtColor(inPutFrame, face.hsv, cv::COLOR_BGR2HSV);
+	cv::extractChannel(face.hsv, face.hue, 0);
+	cv::inRange(face.hue, 2, 10, face.hue);
+
+	cv::GaussianBlur(face.hue, face.hue, cv::Size(1, 1), 0);
+	cv::GaussianBlur(face.hue, face.hue, cv::Size(5, 5), 0);
+	cv::GaussianBlur(face.hue, face.hue, cv::Size(9, 9), 0);
+
+	cv::copyTo(inPutFrame, outPutFrame, face.hue);
+
+	if (face.old_frame.empty())
+	{
+		face.old_frame = outPutFrame;
+	}
+
+	cv::cvtColor(outPutFrame, find, cv::COLOR_BGR2GRAY);
+
+	cv::threshold(find, find, 50, 255, cv::THRESH_BINARY);
+	cv::findContours(find, face.contours, face.hierarchy, 0, 3);
+
+	cv::drawContours(inPutFrame, face.contours, -1, cv::Scalar(0, 255, 0));
+
+	auto fillter = [&](const std::vector<cv::Point>& vec)
+	{
+		return vec.size() > 100;
+	};
+
+	std::vector<std::vector<cv::Point>> vec;
+	std::vector<cv::Point> mask;
+
+	int num = 0;
+	if (face.contours.size() > 0)
+	{
+		for (int j = 0; j < face.contours.size(); j++)
+		{
+			if (fillter(face.contours[j]))
+			{
+				vec.emplace_back();
+				for (auto cont : face.contours[j])
+				{
+					vec[num].emplace_back(cont);
+				}
+				num++;
+			}
+
+		}
+	}
+
+	for (int i = 0; i < vec.size(); i++)
+	{
+		int npits = static_cast<int>(vec[i].size());
+		cv::Point tPoint;
+		for (int j = 0; j < vec[i].size(); j++)
+		{
+			tPoint = vec[i][j];
+			if (j + 1 >= vec[i].size())
+			{
+				cv::line(inPutFrame, vec[i][j], vec[i][0], cv::Scalar(255, 0, 0), 2);
+				break;
+			}
+
+			cv::line(inPutFrame, vec[i][j], vec[i][j + 1], cv::Scalar(255, 0, 0), 2);
+			//cv::fillConvexPoly(inPutFrame, &vec[i][j], npits, cv::Scalar(255, 255, 255), 8, 0);
+
+		}
+		//cv::fillPoly(inPutFrame, vec[i], cv::Scalar(255, 255, 255));
+		//cv::fillConvexPoly(inPutFrame, vec[i], cv::Scalar(255, 255, 255));
+	}
+
+	//cv::absdiff(outPutFrame, face.old_frame, inPutFrame);
+	face.old_frame = outPutFrame;
+
+}
+
+DLLEXPORT void FocusMoment(cv::Mat& inPutFrame)
+{
+	cv::Mat mask1;
+	cv::Mat maskFrame;
+	//maskFrame = inPutFrame;
+	cv::GaussianBlur(inPutFrame, maskFrame, cv::Size(15, 15), 10);
+	inRange(maskFrame, cv::Scalar(0,0,50), cv::Scalar(100,120,255), mask1);
+
+	cv::Moments mom1 = cv::moments(mask1, 1);
+	cv::Point2f pt1 = cv::Point2f(mom1.m10 / mom1.m00, mom1.m01 / mom1.m00);
+	cv::circle(mask1, pt1, 10, cv::Scalar(100), 3, 4);
+
+	std::vector<std::vector<cv::Point> > h_cont;
+	std::vector<cv::Vec4i> h_hie;
+
+	cv::findContours(mask1, h_cont, h_hie, 0, 3);
+	cv::drawContours(inPutFrame, h_cont, -1, cv::Scalar(0, 255, 0));
+
+	//inPutFrame = mask1;
+}
 
 DLLEXPORT void* __stdcall CreateCascade()
 {
@@ -294,12 +394,16 @@ DLLEXPORT void* __stdcall CreateCascade()
 	face.basic_flag = 0;
 	face.basicPos = cv::Point(0, 0);
 
-	return static_cast<void*>(new cv::CascadeClassifier("C: / Users / takum / OpenCV / opencv / sources / data / haarcascades / haarcascade_frontalface_alt.xml"));
+	return static_cast<void*>(new cv::CascadeClassifier("C:/Users/takum/OpenCV/opencv/sources/data/haarcascades/haarcascade_frontalface_alt.xml"));
 }
 
 //OpenCV使用関係
 DLLEXPORT void* __stdcall GetCamera()
 {
+	if (!CheckFace(face))
+	{
+		ClearFace(face);
+	}
 	return static_cast<void*>(new cv::VideoCapture(0));
 }
 
@@ -310,17 +414,9 @@ DLLEXPORT void __stdcall CloseCamera(void* camera)
 	closeCamera->release();
 }
 
-DLLEXPORT void __stdcall CameraUpdate(void* camera, void* casc, unsigned char* data, int width, int height, bool mosaic, unsigned char* imageData)
+DLLEXPORT void __stdcall CameraUpdate(void* camera, unsigned char* data, int width, int height, bool mosaic, unsigned char* imageData)
 {
 	auto vc = static_cast<cv::VideoCapture*>(camera);
-
-	cv::CascadeClassifier* ca;
-	cv::CascadeClassifier cas;
-	if (casc != nullptr)
-	{
-		ca = static_cast<cv::CascadeClassifier*>(casc);
-		cas = *ca;
-	}
 
 	cv::Mat frame;
 	*vc >> frame;
@@ -333,22 +429,24 @@ DLLEXPORT void __stdcall CameraUpdate(void* camera, void* casc, unsigned char* d
 
 	face.mosaic = frame;
 
-	//FaceCheck(face.faces, cas, face.mosaic, face.detection_frame, frame, face.detection_flag, face.basic_flag, face.faceRect, face.basicPos);
 	//ImageResize(face.mosaic, oldSize);
 
 	cv::imshow("window", frame);
 	resize_f.release();
 }
 
-
 DLLEXPORT void __stdcall CameraUpdateOverRide(void* camera, int width, int height, bool mosaic, unsigned char* imageData)
 {
 	auto vc = static_cast<cv::VideoCapture*>(camera);
+	/*cv::CascadeClassifier test;
 
-	cv::CascadeClassifier test;
-	test.load("C:/Users/takum/OpenCV/opencv/sources/data/haarcascades/haarcascade_frontalface_alt.xml");
+	if (test.empty())
+	{
+		test.load("C:/Users/takum/OpenCV/opencv/sources/data/haarcascades/haarcascade_frontalface_alt.xml");
+	}*/
 
 	cv::Mat frame;
+	cv::Mat outputFrame;
 	*vc >> frame;
 
 	cv::Mat resize_f(height, width, frame.type());
@@ -359,8 +457,16 @@ DLLEXPORT void __stdcall CameraUpdateOverRide(void* camera, int width, int heigh
 
 	face.mosaic = frame;
 
-	FaceCheck(face.faces, test, face.mosaic, face.detection_frame, frame, face.detection_flag, face.basic_flag, face.faceRect, face.basicPos);
+	/*if (!test.empty())
+	{
+		FaceCheck(face.faces, test, face.mosaic, face.detection_frame, frame, face.detection_flag, face.basic_flag, face.faceRect, face.basicPos);
+	}*/
+
+	FocusMoment(frame);
+	HandDetect(frame, outputFrame);
+
 	cv::imshow("window", frame);
+
 	resize_f.release();
 }
 
