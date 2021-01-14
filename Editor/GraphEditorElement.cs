@@ -83,12 +83,43 @@ public class GraphEditorElement : VisualElement
         Remove(edge);
         m_Edges.Remove(edge);
     }
+    public void RemoveNodeElement(NodeElement node)
+    {
+        m_GraphAsset.nodes.Remove(node.serializableNode);  // アセットから削除
+
+        int id = m_Nodes.IndexOf(node);
+
+        // エッジの削除とID変更
+        // m_Edgesに変更が伴うため、降順で行う
+        for (int i = m_Edges.Count - 1; i >= 0; i--)
+        {
+            var edgeElement = m_Edges[i];
+            var edge = edgeElement.serializableEdge;
+
+            // 削除されるノードにつながるエッジを削除
+            if (edgeElement.To == node || edgeElement.From == node)
+            {
+                RemoveEdgeElement(edgeElement);
+                continue;
+            }
+
+            // 変更が生じるIDを持つエッジに対して、IDに修正を加える
+            if (edge.toId > id)
+                edge.toId--;
+        }
+
+        Remove(node);  // VisualElementの子としてのノードを削除
+        m_Nodes.Remove(node);  // 順序を保持するためのリストから削除
+    }
 
     void OnContextMenuPopulate(ContextualMenuPopulateEvent evt)
     {
         evt.menu.AppendAction("Add Node", AddNodeMenuAction, DropdownMenuAction.AlwaysEnabled);
+        evt.menu.AppendAction("読み込み", LoadTextDataFile, DropdownMenuAction.AlwaysEnabled);
+
     }
- 
+
+    //Nodeの追加
     void AddNodeMenuAction(DropdownMenuAction menuAction)
     {
         Vector2 mousePosition = menuAction.eventInfo.localMousePosition;
@@ -97,6 +128,22 @@ public class GraphEditorElement : VisualElement
         m_GraphAsset.nodes.Add(node);  // アセットに追加する
 
         CreateNodeElement(node);
+    }
+
+    //ファイルの読み込み
+    void LoadTextDataFile(DropdownMenuAction menuAction)
+    {
+        var file = new SaveManager();
+        file.OpenFile();
+
+        Vector2 mousePosition = menuAction.eventInfo.localMousePosition;
+        var node = new SerializableNode() { position = mousePosition, data = file.readData, name = file.saveDataName };
+
+        m_GraphAsset.nodes.Add(node);  // アセットに追加する
+
+        CreateNodeElement(node);
+
+
     }
     public void DrawEdge()
     {

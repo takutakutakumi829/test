@@ -12,8 +12,10 @@ public class GraphAsset : ScriptableObject
 [System.Serializable]
 public class SerializableNode
 {
+    public string name;
     public Vector2 position;
     public List<SerializableEdge> edges = new List<SerializableEdge>();
+    public SaveData data;
 }
 
 [System.Serializable]
