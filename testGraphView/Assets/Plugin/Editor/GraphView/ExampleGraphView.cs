@@ -39,7 +39,6 @@ public class ExampleGraphView : GraphView
         this.AddManipulator(new RectangleSelector());
         //this.AddManipulator(new ContextualMenuManipulator(OnContextMenuPopulate));
 
-
         //右クリックでのメニューの表示
         searchWindow = ScriptableObject.CreateInstance<SearchMenuWindow>();
         searchWindow.Init(this, editor, ref graphAsset);
@@ -61,30 +60,31 @@ public class ExampleGraphView : GraphView
     {
         var compatible = new List<Port>();
 
-        compatible.AddRange(ports.ToList().Where(port =>
+        foreach(var port in ports.ToList())
         {
             //分岐
             // 同じノードには繋げない
             if (startPort.node == port.node)
             {
-                return false;
+                continue;
             }
 
             // Input同士、Output同士は繋げない
             if (port.direction == startPort.direction)
             {
-                return false;
+                continue;
             }
 
             // ポートの型が一致していない場合は繋げない
             if (port.portType != startPort.portType)
             {
-                return false;
+                continue;
             }
 
-            return true;
-        }));
+            compatible.Add(port);
+        }
   
+        
         return compatible;
     }
 
@@ -119,7 +119,7 @@ public class ExampleGraphView : GraphView
                 {
                     list[j].ConnectTo(list[num]);
                     //edge[num]
-                    
+
                     //var portList = GetCompatiblePorts(list[j],)
 
                 }

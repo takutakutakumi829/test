@@ -4,11 +4,13 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor;
 using UnityEditor.Callbacks;
+using System.Runtime.InteropServices;
 
 public class EditWindow : EditorWindow
 {
     ExampleGraphView graphView;
     GraphAsset graphAsset;
+
 
     [MenuItem("Window/なんかすごいえでぃた")]
     public static void Open()

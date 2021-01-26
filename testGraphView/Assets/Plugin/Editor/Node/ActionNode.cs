@@ -44,10 +44,6 @@ public class ActionNode : Node
             outputPort.portName = "data" + j;
             outputContainer.Add(outputPort);
 
-            //objectField = new ObjectField();
-            //objectField.objectType = typeof(ActionData);
-            //outputContainer.Add(objectField);
-
         }
 
     }

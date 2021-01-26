@@ -24,7 +24,6 @@ public class SearchMenuWindow : ScriptableObject, ISearchWindowProvider
         foreach (var node in asset.data)
         {
             saveData = node;
-            int j = 0;
         }
     }
     public ExampleGraphView GetGraphView()
