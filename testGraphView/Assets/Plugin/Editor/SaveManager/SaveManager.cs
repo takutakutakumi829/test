@@ -7,6 +7,50 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Linq;
 
+
+
+public enum ConditionDataField
+{
+    アクション終了時 = 4,
+    アクション開始時,
+    アクション終了時is自分の持つイベントから,
+    特定のアクションが終わったらisステート用,
+    Update処理 = 10,
+    視点切り替え完了時, 自分の持つイベントから = 20,
+    セットisハンドデータ = 100,
+    特定の範囲内に入ったら = 200,
+    トリガー処理isString = 300,
+    ターゲット座標設定時,
+    ターゲットスキル設定時,
+    FloatParamの比較 = 500,
+    スキルのフラグをチェック = 600
+}
+public enum ContentDataField
+{
+    アクションの終了 = 5,
+    三人称切り替え = 10,
+    FloatParamのセット = 50,
+    FloatParamのDeltaTime加算 = 55,
+    入力に対する移動 = 100,
+    入力に対する回転,
+    移動入力に応じたアニメーション,
+    スキルからアニメーションパラム設定 = 105,
+    移動ベクトルに０をセット = 110,
+    キネマティックの設定 = 130,
+    コライダーの有効or無効判定,
+    スキルを設定is現在のアクションに渡す用 = 140,
+    座標を設定is現在のアクションに渡す用 = 142,
+    スキルから座標設定 = 150,
+    ターゲット座標にボーンオフセットを加算 = 152,
+    スキルからの回転設定 = 160,
+    回転の直値設定 = 162,
+    ターゲットへ向けて移動 = 200,
+    ターゲットへのLerp座標移動 = 300,
+    ターゲットへのLerp回転移動,
+    トリガーの実行 = 500,
+    ステート切り替えisステート用 = 1000
+}
+
 [Serializable]
 public struct SaveData
 {
@@ -15,6 +59,9 @@ public struct SaveData
     public bool isBase;
     public List<ActionData> events;
     public List<String> clipPath;
+    public Vector2 position;
+    public string pathName;
+
 
     public void Dump()
     {
@@ -61,9 +108,9 @@ public struct SaveData
 [Serializable]
 public struct ActionData
 {
-    public int condition;
+    public ConditionDataField condition;
     public String conditionData;
-    public int content;
+    public ContentDataField content;
     public String contentData;
 
     //		"condition":5,
@@ -94,6 +141,8 @@ public struct ActionData
 public class SaveManager : MonoBehaviour
 {
     public string saveDataName = "save.txt";
+    public string pathName = "save.txt";
+
     public SaveData readData;
 
     //拡張子探索
@@ -146,10 +195,32 @@ public class SaveManager : MonoBehaviour
         //拡張子探索
         var filename = GetExtensionFileName(path);
         saveDataName = filename;
+        pathName = path;
 
 
         //読み込み
         var info = new FileInfo(path);
+        var reader = new StreamReader(info.OpenRead());
+        var json = reader.ReadToEnd();
+
+        //jsonデータの読み込み
+        var data = JsonUtility.FromJson<SaveData>(json);
+        data.Dump();
+        readData = data;
+    }
+    public void LoadFile(string pathName)
+    {
+        if (string.IsNullOrEmpty(pathName))
+            return;
+        Debug.Log(pathName);
+
+        //拡張子探索
+        var filename = GetExtensionFileName(pathName);
+        saveDataName = filename;
+
+
+        //読み込み
+        var info = new FileInfo(pathName);
         var reader = new StreamReader(info.OpenRead());
         var json = reader.ReadToEnd();
 

@@ -13,4 +13,34 @@ MonoBehaviour:
   m_Name: graph
   m_EditorClassIdentifier: 
   nodes: []
-  data: []
+  data:
+  - stateKey: base
+    isBase: 1
+    events:
+    - condition: 5
+      conditionData: 
+      content: 1000
+      contentData: WaitState
+    - condition: 300
+      conditionData: SitInChair
+      content: 1000
+      contentData: SitState
+    - condition: 300
+      conditionData: SuspendGoToChairToGoToTarget
+      content: 1000
+      contentData: WaitState
+    - condition: 300
+      conditionData: SuspendGoToChairToGoToTarget
+      content: 142
+      contentData: 
+    - condition: 300
+      conditionData: SuspendGoToChairToGoToTarget
+      content: 500
+      contentData: GoToTarget
+    - condition: 300
+      conditionData: CompletedStandUp
+      content: 1000
+      contentData: WaitState
+    clipPath: []
+    position: {x: 253.00002, y: 242}
+    pathName: C:/Users/takum/Desktop/test/testUnity/test OpenCV Dll Project/Assets/Script/Editor/SaveData/baseData.txt

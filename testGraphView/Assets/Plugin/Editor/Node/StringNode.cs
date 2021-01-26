@@ -16,28 +16,31 @@ public class StringNode : Node
     {
         title = "String";
         port = Port.Create<Edge>(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(string));
-        port.portName = "すとりんぐ";
+        port.portName = "StringValue";
         
         outputContainer.Add(port);
 
         Init();
     }
 
-    public StringNode(Port p)
+    public StringNode(string path)
     {
         title = "String";
         port = Port.Create<Edge>(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(string));
-        port.portName = "Value";
-        port.ConnectTo(p);
+        port.portName = "StringValue";
 
         outputContainer.Add(port);
 
-        Init();
+        Init(path);
     }
 
-    public void Init()
+    public void Init(string textData = null)
     {
         textField = new TextField();
+        if (textData != null)
+        {
+            textField.value = textData;
+        }
         mainContainer.Add(textField);
 
     }

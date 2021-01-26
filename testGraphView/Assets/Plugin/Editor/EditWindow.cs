@@ -26,7 +26,7 @@ public class EditWindow : EditorWindow
     static bool OnOpenAsset(int instance, int line)
     {
         //GraphAssetファイルを選んだ場合
-        if(EditorUtility.InstanceIDToObject(instance) is GraphAsset)
+        if (EditorUtility.InstanceIDToObject(instance) is GraphAsset)
         {
             Open();
             return true;
@@ -34,6 +34,7 @@ public class EditWindow : EditorWindow
 
         return false;
     }
+
 
     void OnEnable()
     {
@@ -46,8 +47,23 @@ public class EditWindow : EditorWindow
     public void Init(GraphAsset asset)
     {
         graphAsset = asset;
-        graphView = new ExampleGraphView(this, graphAsset);
+        graphView = new ExampleGraphView(this, ref graphAsset);
         rootVisualElement.Add(graphView);
+        if (asset.data.Count != 0)
+        {
+           graphView.getSearchWindow.SetLoadData(graphAsset);
+           graphView.CheckPortList();
+
+        }
     }
-   
+
+    public void Update()
+    {
+        if (graphView.getSearchWindow.dataLoadFlag == true)
+        {
+            graphView.getSearchWindow.SetDataAsset(ref graphAsset);
+            graphView.CheckPortList();
+        }
+    }
+
 }

@@ -22,10 +22,23 @@ public class BoolNode : Node
         var port = Port.Create<Edge>(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(bool));
         port.portName = "Value";
         inputContainer.Add(port);
+        AddField();
+    }
+    public BoolNode(bool flag)
+    {
+        title = "Bool";
+        var port = Port.Create<Edge>(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(bool));
+        port.portName = "Value";
+        inputContainer.Add(port);
+        AddField(flag);
+    }
 
+    void AddField(bool flag = false)
+    {
         //値の追加
         enumField = new EnumField();
         enumField.Init(boolField);
+        enumField.value = (flag == true ? BoolField.True : BoolField.False);
         mainContainer.Add(enumField);
         RefreshExpandedState();
 
