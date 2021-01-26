@@ -66,6 +66,8 @@ public class EditWindow : EditorWindow
             graphView.getSearchWindow.SetDataAsset(ref graphAsset);
             graphView.CheckPortList();
         }
+        graphView.CheckPortList();
+
     }
 
 }

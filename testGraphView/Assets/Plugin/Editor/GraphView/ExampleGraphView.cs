@@ -56,7 +56,7 @@ public class ExampleGraphView : GraphView
         return graphAsset;
     }
  
-    public override List<Port> GetCompatiblePorts(Port startPort, NodeAdapter adapter)
+    public override List<Port> GetCompatiblePorts(Port startPort, NodeAdapter adapter = null)
     {
         var compatible = new List<Port>();
 
@@ -117,10 +117,8 @@ public class ExampleGraphView : GraphView
             {
                 if (list[j].portName == "StringValue")
                 {
-                    list[j].ConnectTo(list[num]);
-                    //edge[num]
-
-                    //var portList = GetCompatiblePorts(list[j],)
+                    var conecting = list[j].connections;
+                    int i = 0;
 
                 }
             }

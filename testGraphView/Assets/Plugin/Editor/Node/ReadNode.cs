@@ -9,8 +9,9 @@ public class ReadNode : Node
     public SerializableNode serializableNode;
     public List<ActionData> events;
     public List<string> clipPath;
+    private Port port;
 
-    public ReadNode(SerializableNode node)
+    public ReadNode(SerializableNode node) : base()
     {
         title = node.name;
 
@@ -38,5 +39,6 @@ public class ReadNode : Node
         outputContainer.Add(outputClipPath);
 
     }
+    public virtual IEnumerable connections { get { return (IEnumerable)port.connections; } }
 
 }

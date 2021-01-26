@@ -140,6 +140,7 @@ public class SearchMenuWindow : ScriptableObject, ISearchWindowProvider
 
     }
 
+
     void AddElements(object obj, SaveData data, bool setFlag = true)
     {
         var objBase = obj as Node;
@@ -147,8 +148,10 @@ public class SearchMenuWindow : ScriptableObject, ISearchWindowProvider
         graphView.AddElement(objBase);
 
         Node baseNode;
+
         Vector2 pos = new Vector2(100, 50);
         var args = new object[] { data.stateKey };
+
 
         //stringNode
         if (data.stateKey != "")

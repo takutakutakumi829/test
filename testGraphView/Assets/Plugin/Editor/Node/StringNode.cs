@@ -12,7 +12,7 @@ public class StringNode : Node
     private Port port;
     public Port gPort { get { return port; } }
 
-    public StringNode()
+    public StringNode() : base()
     {
         title = "String";
         port = Port.Create<Edge>(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(string));
@@ -23,11 +23,13 @@ public class StringNode : Node
         Init();
     }
 
-    public StringNode(string path)
+    public StringNode(string path) : base()
     {
         title = "String";
         port = Port.Create<Edge>(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(string));
+
         port.portName = "StringValue";
+        //port.Connect(port.ConnectTo(p));
 
         outputContainer.Add(port);
 
@@ -44,5 +46,6 @@ public class StringNode : Node
         mainContainer.Add(textField);
 
     }
+    public virtual IEnumerable connections { get { return (IEnumerable)port.connections; } }
 
 }
