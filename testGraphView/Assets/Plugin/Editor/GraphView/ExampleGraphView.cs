@@ -83,8 +83,7 @@ public class ExampleGraphView : GraphView
 
             compatible.Add(port);
         }
-  
-        
+ 
         return compatible;
     }
 
