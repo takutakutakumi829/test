@@ -6,8 +6,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Linq;
-
-
+using UnityEditor.Experimental.GraphView;
 
 public enum ConditionDataField
 {
@@ -62,7 +61,16 @@ public struct SaveData
     public Vector2 position;
     public string pathName;
 
+    public void Init(Vector2 pos, string path)
+    {
+        stateKey = "";
+        isBase = false;
+        position = pos;
+        pathName = path;
 
+        events = new List<ActionData>();
+        clipPath = new List<string>();
+    }
     public void Dump()
     {
         //stateKeyチェック
@@ -106,6 +114,22 @@ public struct SaveData
 }
 
 [Serializable]
+public struct UploadSaveDataOutPath
+{
+    public String stateKey;
+    public bool isBase;
+    public List<ActionData> events;
+}
+[Serializable]
+public struct UploadSaveDataInPath
+{
+    public String stateKey;
+    public bool isBase;
+    public List<ActionData> events;
+    public List<String> clipPath;
+}
+
+[Serializable]
 public struct ActionData
 {
     public ConditionDataField condition;
@@ -117,6 +141,14 @@ public struct ActionData
     //		"conditionData":"",
     //		"content":1000,
     //		"contentData":"WaitState"
+
+    public void SetActionData(ConditionDataField contion, String conditionData, ContentDataField content, String contentData)
+    {
+        this.condition = contion;
+        this.conditionData = conditionData;
+        this.content = content;
+        this.contentData = contentData;
+    }
 
     public void Dump()
     {
@@ -151,6 +183,11 @@ public class SaveManager : MonoBehaviour
     //FileName探索
     [DllImport("ExtensionCheck")]
     private static extern String GetExtensionFileName(String path);
+
+    public string GetExtensionFileNameSaveData(String path)
+    {
+        return GetExtensionFileName(path);
+    }
 
     // Update is called once per frame
     void Update()
@@ -229,5 +266,87 @@ public class SaveManager : MonoBehaviour
         data.Dump();
         readData = data;
     }
+
+    public void UploadFile(SaveData data)
+    {
+        UploadSaveDataInPath inPathData;
+        UploadSaveDataOutPath outPathData;
+        string json;
+        //まずはdataをUpload用に移し替える
+        //chipPathが存在する場合とそうでない場合で保存先を分ける
+        if(data.clipPath.Count > 0)
+        {
+            inPathData.isBase = data.isBase;
+            inPathData.stateKey = data.stateKey;
+            inPathData.events = data.events;
+            inPathData.clipPath = data.clipPath;
+
+            // JSONにシリアライズ
+            json = JsonUtility.ToJson(inPathData);
+
+        }
+        else
+        {
+            outPathData.isBase = data.isBase;
+            outPathData.stateKey = data.stateKey;
+            outPathData.events = data.events;
+
+            // JSONにシリアライズ
+            json = JsonUtility.ToJson(outPathData);
+
+        }
+
+        // Assetsフォルダに保存する
+        var path = EditorUtility.SaveFilePanel("Upload Text", Application.dataPath, "SaveDataName", "txt");
+        if (string.IsNullOrEmpty(path))
+            return;
+
+        //var path = Application.dataPath + "/" + saveDataName;
+        var writer = new StreamWriter(path, false); // 上書き
+        writer.WriteLine(json);
+        writer.Flush();
+        writer.Close();
+    }
+
+
+    public static void SaveGraph(string fileName, GraphView graphView)
+    {
+
+        var graphData = ScriptableObject.CreateInstance<GraphAsset>();
+        var path = EditorUtility.SaveFilePanelInProject("Save Asset", "SaveAssetName", "asset", "Save to Asset");
+        if (string.IsNullOrEmpty(path))
+            return;
+
+        if (path == null)
+        {
+            return;
+        }
+
+        var nodes = GetNodes(graphView);
+        foreach (var node in nodes)
+        {
+            var isBase = node.GetIsBase();
+            bool isbase = isBase;
+
+            var actionData = node.GetEventsData();
+            var clip = node.GetClipPath();
+
+            graphData.data.Add(new SaveData()
+            {
+                stateKey = node.GetStateKey,
+                isBase = isbase,
+                events = actionData,
+                clipPath = clip,
+                pathName = node.GetPathName,
+                position = node.GetPosition
+
+            });
+        }
+        AssetDatabase.CreateAsset(graphData, $"{path}");
+        AssetDatabase.SaveAssets();
+    }
+
+    private static List<Edge> GetEdges(GraphView graphView) => graphView.edges.ToList();
+    private static List<OutlineNode> GetNodes(GraphView graphView) => graphView.nodes.ToList().Cast<OutlineNode>().ToList();
 
 }

@@ -42,5 +42,5 @@ MonoBehaviour:
       content: 1000
       contentData: WaitState
     clipPath: []
-    position: {x: 253.00002, y: 242}
-    pathName: C:/Users/takum/Desktop/test/testUnity/test OpenCV Dll Project/Assets/Script/Editor/SaveData/baseData.txt
+    position: {x: 466, y: 362}
+    pathName: "C:/Users/\u30BF\u30AF\u30DF/Desktop/Unity/testGraphView/Assets/Plugin/Editor/SaveManager/SaveData/baseData.txt"

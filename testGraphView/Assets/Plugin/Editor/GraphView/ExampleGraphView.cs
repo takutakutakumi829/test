@@ -6,9 +6,12 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
+using System;
 
 public class ExampleGraphView : GraphView
 {
+    private EditorWindow editorWindow;
+
     public SerializableNode serializableNode;
     public SearchMenuWindow searchWindow;
     public SearchMenuWindow getSearchWindow { get { return searchWindow; } }
@@ -22,10 +25,14 @@ public class ExampleGraphView : GraphView
     //選択ドラッグのマニピュレーター
     public SelectionDragger selectionDragger;
 
+    //Saveの管理
+    public bool SaveFlag = false;
+
     public ExampleGraphView(EditorWindow editor, ref GraphAsset asset)
     {
         graphAsset = asset;
-       
+        editorWindow = editor;
+
         //AddElement(new ExampleNode());  //ノードの追加
 
         //諸々の設定
@@ -33,29 +40,59 @@ public class ExampleGraphView : GraphView
 
         contentDragger = new ContentDragger();
         selectionDragger = new SelectionDragger();
+
         SetupZoom(ContentZoomer.DefaultMinScale, ContentZoomer.DefaultMaxScale);
+        this.AddManipulator(new ContextualMenuManipulator(OnContextMenuPopulate));
+
         this.AddManipulator(contentDragger);
         this.AddManipulator(selectionDragger);
-        this.AddManipulator(new RectangleSelector());
-        //this.AddManipulator(new ContextualMenuManipulator(OnContextMenuPopulate));
-
+        //this.AddManipulator(new RectangleSelector());
+ 
         //右クリックでのメニューの表示
         searchWindow = ScriptableObject.CreateInstance<SearchMenuWindow>();
         searchWindow.Init(this, editor, ref graphAsset);
 
-  
-        nodeCreationRequest += context =>
+         nodeCreationRequest += context =>
         {
             SearchWindow.Open(new SearchWindowContext(context.screenMousePosition), searchWindow);
             
         };
     }
 
+    void OnContextMenuPopulate(ContextualMenuPopulateEvent evt)
+    {
+        evt.menu.AppendAction("アセットの保存", SaveFileAction, DropdownMenuAction.AlwaysEnabled);
+        evt.menu.AppendAction("出力", AddUploadFileAction, DropdownMenuAction.AlwaysEnabled);
+        evt.menu.AppendAction("読み込み", LoadTextDataFile, DropdownMenuAction.AlwaysEnabled);
+
+    }
+
+    //アセットのセーブ
+    void SaveFileAction(DropdownMenuAction menuAction)
+    {
+        // マウスの位置にノードを追加
+        SaveFlag = true;
+    }
+
+    //Nodeの追加
+    void AddUploadFileAction(DropdownMenuAction menuAction)
+    {
+        // 出力
+        getSearchWindow.UploadTextDataFile();
+    }
+
+    //ファイルの読み込み
+    void LoadTextDataFile(DropdownMenuAction menuAction)
+    {
+        //読み込むノードの分岐
+        getSearchWindow.LoadTextDataFile(menuAction.eventInfo.localMousePosition);
+    }
+
     public GraphAsset GetGraphAsset()
     {
         return graphAsset;
     }
- 
+
     public override List<Port> GetCompatiblePorts(Port startPort, NodeAdapter adapter = null)
     {
         var compatible = new List<Port>();
@@ -87,42 +124,5 @@ public class ExampleGraphView : GraphView
         return compatible;
     }
 
-    public void CheckPortList()
-    {
-        var edge = edges.ToList();
-        var node = nodes.ToList();
-        var list = ports.ToList();
-        Port setPort;
-        int num = 0;
-
-        //inPut検索
-        for(int j = 0;j < list.Count; j++)
-        {
-            if(list[j].direction == Direction.Input)
-            {
-                if(list[j].portName == "State Key")
-                {
-                    setPort = list[j];
-
-                    num = j;
-                }
-            }
-        }
-
-        //outPut検索
-        for (int j = 0; j < list.Count; j++)
-        {
-            if (list[j].direction == Direction.Output)
-            {
-                if (list[j].portName == "StringValue")
-                {
-                    var conecting = list[j].connections;
-                    int i = 0;
-
-                }
-            }
-        }
-
-    }
-
 }
+

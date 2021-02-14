@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor.UIElements;
 
-public class BoolNode : Node
+public class BoolNode : BaseEdge
 {
     private EnumField enumField;
     public int Text { get { return (int)enumField.userData; } }
@@ -33,6 +33,23 @@ public class BoolNode : Node
         AddField(flag);
     }
 
+    public BoolNode(bool flag, BaseEdge edge)
+    {
+        title = "Bool";
+        var port = Port.Create<Edge>(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(bool));
+        port.portName = "Value";
+
+        outputContainer.Add(port);
+
+        //値の追加
+        enumField = new EnumField();
+        enumField.Init(boolField);
+        enumField.value = (flag == true ? BoolField.True : BoolField.False);
+        mainContainer.Add(enumField);
+
+        RefreshExpandedState();
+    }
+
     void AddField(bool flag = false)
     {
         //値の追加
@@ -41,7 +58,6 @@ public class BoolNode : Node
         enumField.value = (flag == true ? BoolField.True : BoolField.False);
         mainContainer.Add(enumField);
         RefreshExpandedState();
-
     }
 
 }

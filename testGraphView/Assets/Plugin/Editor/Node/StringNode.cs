@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor.Experimental.GraphView;
 
-public class StringNode : Node
+public class StringNode : BaseEdge
 {
     private TextField textField;
     public string Text { get { return textField.value; } }
@@ -31,6 +31,21 @@ public class StringNode : Node
         port.portName = "StringValue";
         //port.Connect(port.ConnectTo(p));
 
+        outputContainer.Add(port);
+
+        Init(path);
+    }
+
+    //接続用に一纏め
+    public StringNode(string path, BaseEdge edge) : base()
+    {
+        title = "String";
+        port = Port.Create<Edge>(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(string));
+
+        port.portName = "StringValue";
+        //port.Connect(port.ConnectTo(p));
+
+        //edge.GetOutputContainer().Add(port);
         outputContainer.Add(port);
 
         Init(path);

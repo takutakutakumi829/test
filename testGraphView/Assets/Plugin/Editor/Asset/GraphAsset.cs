@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 using UnityEditor;
 using UnityEditor.Callbacks;
 
-[CreateAssetMenu(fileName = "graph.asset", menuName = "Graph Asset")]
+[CreateAssetMenu(fileName = "graph.asset", menuName = "Animation Graph Asset")]
 public class GraphAsset : ScriptableObject
 {
     public List<SerializableNode> nodes = new List<SerializableNode>();

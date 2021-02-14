@@ -16,6 +16,7 @@ public class SearchMenuWindow : ScriptableObject, ISearchWindowProvider
     public SaveData saveData;
     public bool dataLoadFlag = false;
     public Port readPort;
+    public BaseEdge baseEdge;
 
     public void Init(ExampleGraphView graph, EditorWindow edit, ref GraphAsset asset)
     {
@@ -31,6 +32,15 @@ public class SearchMenuWindow : ScriptableObject, ISearchWindowProvider
         return graphView;
     }
 
+    //更新
+    public void Update()
+    {
+    }
+    public void Update(ref ExampleGraphView graph)
+    {
+        graphView = graph;
+    }
+
     public void SetDataAsset(ref GraphAsset asset)
     {
         asset.data.Add(saveData);
@@ -41,7 +51,7 @@ public class SearchMenuWindow : ScriptableObject, ISearchWindowProvider
         foreach (var save in asset.data)
         {
             //ここでfileNameの入力
-            LoadTextDataFile(save.position, false, save.pathName);
+            LoadTextDataFile(save, save.position, false, save.pathName);
         }
     }
 
@@ -49,19 +59,24 @@ public class SearchMenuWindow : ScriptableObject, ISearchWindowProvider
     {
         dataLoadFlag = false;
         var entries = new List<SearchTreeEntry>();
-        entries.Add(new SearchTreeGroupEntry(new GUIContent("何か作る")));
+        entries.Add(new SearchTreeGroupEntry(new GUIContent("新規作成")));
 
-        entries.Add(new SearchTreeGroupEntry(new GUIContent("Read Node")) { level = 1 });
-        entries.Add(new SearchTreeEntry(new GUIContent(nameof(TestNode))) { level = 2, userData = typeof(ReadNode) });
+        //entries.Add(new SearchTreeGroupEntry(new GUIContent("Read Node")) { level = 1 });
+        //entries.Add(new SearchTreeEntry(new GUIContent(nameof(TestNode))) { level = 2, userData = typeof(ReadNode) });
 
 
         entries.Add(new SearchTreeGroupEntry(new GUIContent("Create New Node")) { level = 1 });
 
         //追加するノードの設定
-        entries.Add(new SearchTreeEntry(new GUIContent(nameof(BoolNode))) { level = 2, userData = typeof(BoolNode) });
-        entries.Add(new SearchTreeEntry(new GUIContent(nameof(NumNode))) { level = 2, userData = typeof(NumNode) });
-        entries.Add(new SearchTreeEntry(new GUIContent(nameof(StringNode))) { level = 2, userData = typeof(StringNode) });
-        entries.Add(new SearchTreeEntry(new GUIContent(nameof(ValueNode))) { level = 2, userData = typeof(ValueNode) });
+        entries.Add(new SearchTreeEntry(new GUIContent(nameof(OutlineNode))) { level = 2, userData = typeof(OutlineNode) });
+
+        //entries.Add(new SearchTreeEntry(new GUIContent(nameof(BoolNode))) { level = 2, userData = typeof(BoolNode) });
+        //entries.Add(new SearchTreeEntry(new GUIContent(nameof(NumNode))) { level = 2, userData = typeof(NumNode) });
+        //entries.Add(new SearchTreeEntry(new GUIContent(nameof(StringNode))) { level = 2, userData = typeof(StringNode) });
+        //entries.Add(new SearchTreeEntry(new GUIContent(nameof(ValueNode))) { level = 2, userData = typeof(ValueNode) });
+
+        //entries.Add(new SearchTreeGroupEntry(new GUIContent("Upload Node")) { level = 1 });
+        //entries.Add(new SearchTreeEntry(new GUIContent(nameof(UploadNode))) { level = 2, userData = typeof(UploadNode) });
 
         return entries;
     }
@@ -80,18 +95,42 @@ public class SearchMenuWindow : ScriptableObject, ISearchWindowProvider
             LoadTextDataFile(localMousePosition);
             return true;
         }
-        
-        //呼び出し
-        var node = Activator.CreateInstance(type) as Node;
+        if (typeName == "UploadNode")
+        {
+            var file = new SaveManager();
+            file.UploadFile(saveData);
 
-        node.SetPosition(new Rect(localMousePosition, new Vector2(100, 100)));
-        graphView.AddElement(node);
+            return true;
+        }
+
+        //呼び出し
+        SaveData data = new SaveData();
+        data.Init(localMousePosition, "");
+        saveData = data;
+
+        OutlineNode outlineNode;
+        outlineNode = new OutlineNode(data);
+
+        graphView.AddElement(outlineNode);
+        graphView.graphAsset.data.Add(saveData);
+
+        //var node = Activator.CreateInstance(type) as Node;
+
+        //node.SetPosition(new Rect(localMousePosition, new Vector2(100, 100)));
+        //graphView.AddElement(node);
 
         return true;
     }
 
-    void LoadTextDataFile(Vector2 mousePos, bool addFlag = true, string pathName = null)
+    public void UploadTextDataFile()
     {
+        var file = new SaveManager();
+        file.UploadFile(saveData);
+    }
+
+    public void LoadTextDataFile(Vector2 mousePos, bool addFlag = true, string pathName = null)
+    {
+        baseEdge = new BaseEdge();
         var file = new SaveManager();
         if (pathName == null)
         {
@@ -104,6 +143,34 @@ public class SearchMenuWindow : ScriptableObject, ISearchWindowProvider
 
         var node = new SerializableNode() { position = mousePos, data = file.readData, name = file.saveDataName };
         var data = new SaveData() { stateKey = file.readData.stateKey, isBase = file.readData.isBase, clipPath = file.readData.clipPath, events = file.readData.events, position = node.position, pathName = file.pathName };
+        var view = GetGraphView();
+        if (addFlag == true)
+        {
+            CreateNodeElement(node, data);
+        }
+        else
+        {
+            LoadNodeElement(node, data);
+
+        }
+    }
+
+    void LoadTextDataFile(SaveData saveData,Vector2 mousePos, bool addFlag = true, string pathName = null)
+    {
+        baseEdge = new BaseEdge();
+        var file = new SaveManager();
+        if (pathName == null)
+        {
+            file.OpenFile();
+        }
+        else
+        {
+            file.LoadFile(pathName);
+        }
+
+        var nodeName = file.GetExtensionFileNameSaveData(saveData.pathName);
+        var node = new SerializableNode() { position = mousePos, data = saveData, name = nodeName };
+        var data = new SaveData() { stateKey = saveData.stateKey, isBase = saveData.isBase, clipPath = saveData.clipPath, events = saveData.events, position = saveData.position, pathName = saveData.pathName };
         var view = GetGraphView();
         if (addFlag == true)
         {
@@ -140,8 +207,22 @@ public class SearchMenuWindow : ScriptableObject, ISearchWindowProvider
 
     }
 
+    //まとめて
+    void AddElements(object obj, SaveData data ,bool setFlag = true)
+    {
+        OutlineNode outlineNode;
+        outlineNode = new OutlineNode(data);
 
-    void AddElements(object obj, SaveData data, bool setFlag = true)
+        graphView.AddElement(outlineNode);
+
+        saveData = data;
+
+        dataLoadFlag = (setFlag == true ? true : false);
+
+    }
+
+    //個別用
+    void AddElements(object obj, SaveData data, bool openMode, bool setFlag = true)
     {
         var objBase = obj as Node;
         objBase.SetPosition(new Rect(data.position, new Vector2(100, 100)));
@@ -150,7 +231,7 @@ public class SearchMenuWindow : ScriptableObject, ISearchWindowProvider
         Node baseNode;
 
         Vector2 pos = new Vector2(100, 50);
-        var args = new object[] { data.stateKey };
+        var args = new object[] { data.stateKey, baseEdge };
 
 
         //stringNode
@@ -164,7 +245,7 @@ public class SearchMenuWindow : ScriptableObject, ISearchWindowProvider
 
         //boolNode
         pos = new Vector2(100, -50);
-        args = new object[] { data.isBase };
+        args = new object[] { data.isBase, baseEdge };
         baseNode = Activator.CreateInstance(typeof(BoolNode), BindingFlags.CreateInstance, null, args, null) as Node;
         baseNode.SetPosition(new Rect(data.position - pos, new Vector2(100, 100)));
         graphView.AddElement(baseNode);
@@ -188,6 +269,7 @@ public class SearchMenuWindow : ScriptableObject, ISearchWindowProvider
             baseNode.SetPosition(new Rect(data.position - pos, new Vector2(100, 100)));
             graphView.AddElement(baseNode);
         }
+
 
         dataLoadFlag = (setFlag == true ? true : false);
     }
