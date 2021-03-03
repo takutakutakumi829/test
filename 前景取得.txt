@@ -1,0 +1,18 @@
+OpenCvSharp.Mat binary = new Mat();
+
+        Size size;
+        size.Width = 15;
+        size.Height = 15;
+        OpenCvSharp.Mat element = OpenCvSharp.Cv2.GetStructuringElement(OpenCvSharp.MorphShapes.Ellipse, size);
+
+        //背景の取得(モルフォロジー変換)
+        OpenCvSharp.Mat backGround = new Mat();
+        OpenCvSharp.Cv2.MorphologyEx(grayMat_, backGround, OpenCvSharp.MorphTypes.Open, element);
+
+        //前景の取得(差分)
+        OpenCvSharp.Mat foreGround = new Mat();
+        OpenCvSharp.Cv2.Absdiff(grayMat_, backGround, foreGround);
+
+        //2値化
+        OpenCvSharp.Cv2.Threshold(grayMat_, threshMat_, 0, 255, ThresholdTypes.Binary | ThresholdTypes.Otsu);
+        OpenCvSharp.Cv2.BitwiseNot(threshMat_, bitMat_);
