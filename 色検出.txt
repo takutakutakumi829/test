@@ -1,0 +1,27 @@
+		//HSVに分割
+		cvtColor(frame, hsv, COLOR_BGR2HSV);
+
+		split(hsv, hsvCheck);
+		//hsvCheck[2] = hsvCheck[2] * 5;
+
+		Mat mask1;
+		Mat mask2;
+		Mat mask3;
+
+		//赤色のHSVの値域1
+		Scalar hsv_min = Scalar(0, 255, 255);//緑色
+		auto hsv_max = Scalar(30, 255, 255);//黄色
+		inRange(hsv, hsv_min, hsv_max, mask1);
+
+		// 赤色のHSVの値域2
+		hsv_min = Scalar(170, 64, 0);//青色
+		hsv_max = Scalar(175, 255, 255);//薄い黄色
+		inRange(hsv, hsv_min, hsv_max, mask2);
+
+		Mat mask = mask1 + mask2;
+		Mat maskedFrame;
+		//medianBlur(frame, frame, 9);
+		//GaussianBlur(frame, frame, Size(19, 15), 8, 6);
+		bitwise_and(frame, frame, maskedFrame,  mask = mask);
+		medianBlur(maskedFrame, maskedFrame, 15);
+
