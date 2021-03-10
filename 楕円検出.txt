@@ -1,0 +1,59 @@
+Mat GrayFrame;
+		cvtColor(maskedFrame, GrayFrame, COLOR_BGR2GRAY);
+		Mat binimg;
+
+		medianBlur(GrayFrame, GrayFrame, 15);
+
+		threshold(GrayFrame, binimg, 0, 255, THRESH_BINARY | THRESH_OTSU);
+		//bitwise_not(binimg, binimg);
+
+		Mat dst;
+		cornerHarris(binimg, dst, 2, 3, 0.04);
+		//HoughCircles(binimg, dst, HOUGH_GRADIENT, 2, binimg.rows / 4, 200, 100);
+		findContours(binimg, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE);
+
+		for (int j = 0; j < contours.size(); j++)
+		{
+
+			auto contSize = contourArea(contours[j]);
+
+			//HoughCircles(Mat(contours[j]), circles, HOUGH_GRADIENT, 2, GrayFrame.rows / 4, 200, 100);
+
+			cv::approxPolyDP(Mat(contours[j]), approx, 0.01 * cv::arcLength(contours[j], true), true);
+			auto approxArea = contourArea(approx);
+			auto arc = cv::arcLength(contours[j], true);
+			//// 矩形のみ取得
+			if (contourArea(approx) >= 50) 
+			{
+				//cv::drawContours(frame, contours, j, cv::Scalar(255, 0, 0), 3, 16, hierarchy);
+			}
+
+			if (arc > 70 && approxArea > 700 && approxArea < 40000)
+			{
+				Mat check = Mat(contours[j]);
+
+
+
+				auto testBox = fitEllipse(check);
+				//ellipse(frame, testBox, Scalar(255, 0, 0), 2);
+				//circle(frame, testBox.center, 5, Scalar(0, 0, 255), -1);
+				text = "(" + std::to_string((int)testBox.center.x) + "," + std::to_string((int)testBox.center.y) + ")";
+				//putText(frame, text, testBox.center, FONT_HERSHEY_SIMPLEX, 0.75f, Scalar(120, 200, 255), 2, LINE_AA);
+
+			}
+
+		}
+		goodFeaturesToTrack(dst, trackCorners, 100000, 0.01, 10);
+
+		for (int i = 0; i < trackCorners.size(); i++)
+		{
+
+			cv::approxPolyDP(Mat(trackCorners), approx, 0.01 * cv::arcLength(trackCorners, true), true);
+			auto approxArea = contourArea(approx);
+			auto arc = cv::arcLength(trackCorners, true);
+			//// 矩形のみ取得
+			if (arc > 70 && approxArea > 700 && approxArea < 40000)
+			{
+				//circle(frame, trackCorners[i], 1, Scalar(0, 0, 255), -1);
+			}
+		}
